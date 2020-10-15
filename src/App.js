@@ -4,16 +4,43 @@ import * as faceapi from "face-api.js";
 import WebCamPicture from "./components/WebCamPicture.js";
 import axios from "axios";
 import swal from "sweetalert";
+import Modal from 'react-modal';
+import ImageUploader from 'react-images-upload';
+import Close from './images/close.png'
 const MODEL_URL = "models";
 const minConfidence = 0.6;
 
+const customStyles = {
+  content: {
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)',
+    width: 600
+  }
+};
+
+// Make sure to bind modal to your appElement (http://reactcommunity.org/react-modal/accessibility/)
+Modal.setAppElement('#root')
+
+const subtitle = {
+  style: {}
+};
 export default class App extends Component {
   constructor(props) {
     super(props);
     this.fullFaceDescriptions = null;
     this.canvas = React.createRef();
     this.canvasPicWebCam = React.createRef();
+    this.state = { modalIsOpen: false, pictures: [], name: "", loading: false };
+    this.onDrop = this.onDrop.bind(this);
+    this.nameChange = this.nameChange.bind(this);
+    this.upload = this.upload.bind(this);
   }
+
+
 
   componentDidMount() {
     // await faceapi.nets.ssdMobilenet.load("/models");
@@ -136,9 +163,114 @@ export default class App extends Component {
       });
   };
 
+  upload() {
+    let data = new FormData();
+    data.append("Image", this.state.pictures[0]);
+    data.append("user_name", this.state.name);
+    this.setState({ loading: true })
+    axios
+      .post(`http://3.129.247.96:5000/upload_Image`, data, {
+        headers: {
+          "content-type": "multipart/form-data",
+          "Authorization": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoidXNlciIsInBhc3MiOiJwYXNzd29yZCJ9.KrmQH1gT5pE-kd8wYhgXDkQMp1gah6sDu79ns9Ml9pg",
+          "Access-Control-Allow-Origin": "*"
+        },
+      })
+      .then((res) => {
+        console.log(res.data);
+        swal({
+          title: "Success",
+          text: "image uploaded succssfully",
+          icon: "success",
+          dangerMode: false,
+        });
+        this.closeModal()
+        this.setState({ loading: false })
+
+      })
+      .catch((err) => {
+        console.log(err);
+        swal({
+          title: "Error",
+          text: "error in uploading image",
+          icon: "error",
+          dangerMode: true,
+        });
+        this.setState({ loading: false })
+
+      });
+
+  }
+
+  openModal = () => {
+    this.setState({
+      modalIsOpen: true
+    })
+  }
+
+  afterOpenModal = () => {
+    // references are now sync'd and can be accessed.
+    subtitle.style.color = '#000000a1';
+  }
+
+  closeModal = () => {
+    this.setState({
+      modalIsOpen: false,
+      pictures: [],
+      name: "",
+    })
+  }
+
+  onDrop(picture) {
+    this.setState({
+      pictures: picture,
+    });
+  }
+
+  nameChange(e) {
+    this.setState({ name: e.target.value })
+  }
+
+
   render() {
     return (
       <div className="App">
+        <div className="navbar">
+          <div className="heading">
+            <p>Facial Recognition App</p>
+          </div>
+          <div className="upload">
+            <button onClick={this.openModal}>Upload</button>
+            <Modal
+              isOpen={this.state.modalIsOpen}
+              onAfterOpen={this.afterOpenModal}
+              onRequestClose={this.closeModal}
+              style={customStyles}
+              contentLabel="Example Modal"
+            >
+
+              <h2 ref={_subtitle => (this.subtitle = _subtitle)}>Select an image to upload</h2>
+              <ImageUploader
+                withIcon={true}
+                buttonText={this.state.pictures[0] && this.state.pictures[0].name ? this.state.pictures[0].name : 'Choose an image'}
+                onChange={this.onDrop}
+                imgExtension={['.jpg', '.png']}
+                maxFileSize={5242880}
+              />
+              <input type="text" placeholder="Enter name" onChange={this.nameChange} value={this.state.name} className="name-input" />
+              <button className="closeButton" onClick={this.closeModal}>
+                <img src={Close} alt="" />
+              </button>
+              <div className="upload-cont">
+
+                <button disabled={!this.state.name || !this.state.pictures.length || this.state.loading} className="uploadButton" onClick={this.upload}>
+                  Upload
+              </button>
+              </div>
+
+            </Modal>
+          </div>
+        </div>
         <div
           style={{
             display: "flex",
