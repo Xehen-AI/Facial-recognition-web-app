@@ -4,29 +4,29 @@ import * as faceapi from "face-api.js";
 import WebCamPicture from "./components/WebCamPicture.js";
 import axios from "axios";
 import swal from "sweetalert";
-import Modal from 'react-modal';
-import ImageUploader from 'react-images-upload';
-import Close from './images/close.png'
+import Modal from "react-modal";
+import ImageUploader from "react-images-upload";
+import Close from "./images/close.png";
 const MODEL_URL = "models";
 const minConfidence = 0.6;
 
 const customStyles = {
   content: {
-    top: '50%',
-    left: '50%',
-    right: 'auto',
-    bottom: 'auto',
-    marginRight: '-50%',
-    transform: 'translate(-50%, -50%)',
-    width: 600
-  }
+    top: "50%",
+    left: "50%",
+    right: "auto",
+    bottom: "auto",
+    marginRight: "-50%",
+    transform: "translate(-50%, -50%)",
+    width: 600,
+  },
 };
 
 // Make sure to bind modal to your appElement (http://reactcommunity.org/react-modal/accessibility/)
-Modal.setAppElement('#root')
+Modal.setAppElement("#root");
 
 const subtitle = {
-  style: {}
+  style: {},
 };
 export default class App extends Component {
   constructor(props) {
@@ -34,13 +34,17 @@ export default class App extends Component {
     this.fullFaceDescriptions = null;
     this.canvas = React.createRef();
     this.canvasPicWebCam = React.createRef();
-    this.state = { modalIsOpen: false, pictures: [], name: "", loading: false };
+    this.state = {
+      modalIsOpen: false,
+      pictures: [],
+      name: "",
+      loading: false,
+      image: "",
+    };
     this.onDrop = this.onDrop.bind(this);
     this.nameChange = this.nameChange.bind(this);
     this.upload = this.upload.bind(this);
   }
-
-
 
   componentDidMount() {
     // await faceapi.nets.ssdMobilenet.load("/models");
@@ -120,6 +124,11 @@ export default class App extends Component {
       this.drawDescription(this.canvasPicWebCam.current);
     };
     console.log(image);
+    console.log(picture);
+    let img = picture.split(",")[1];
+    this.setState({
+      image: img,
+    });
     image.src = picture;
   };
 
@@ -131,16 +140,23 @@ export default class App extends Component {
 
   predict = () => {
     console.log(this.canvasPicWebCam);
-    let img = this.convertCanvasToImage(this.canvasPicWebCam.current);
-    console.log(img.src);
+    // let img = this.convertCanvasToImage(this.canvasPicWebCam.current);
+    // console.log(img.src);
+    // console.log(img, "imgge");
     let data = new FormData();
-    img = img.src.split(",")[1];
-    console.log(img);
-    data.append("predict_file", img);
+    // img = img.src.split(",")[1];
+    // console.log(img);
+    console.log(this.state.image);
+    data.append("predict_file", this.state.image);
 
     axios
-      .post(`http://3.133.7.77:8080/predict`, data, {
-        headers: { "content-type": "multipart/form-data" },
+      .post(`http://0.0.0.0:5000/predict`, data, {
+        headers: {
+          "content-type": "multipart/form-data",
+          Authorization:
+            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoidXNlciIsInBhc3MiOiJwYXNzd29yZCJ9.KrmQH1gT5pE-kd8wYhgXDkQMp1gah6sDu79ns9Ml9pg",
+          "Access-Control-Allow-Origin": "*",
+        },
       })
       .then((res) => {
         console.log(res.data);
@@ -167,13 +183,15 @@ export default class App extends Component {
     let data = new FormData();
     data.append("Image", this.state.pictures[0]);
     data.append("user_name", this.state.name);
-    this.setState({ loading: true })
+    this.setState({ loading: true });
+    console.log(this.state.pictures[0], "Pictures [0]");
     axios
-      .post(`http://3.129.247.96:5000/upload_Image`, data, {
+      .post(`http://0.0.0.0:5000/upload_Image`, data, {
         headers: {
           "content-type": "multipart/form-data",
-          "Authorization": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoidXNlciIsInBhc3MiOiJwYXNzd29yZCJ9.KrmQH1gT5pE-kd8wYhgXDkQMp1gah6sDu79ns9Ml9pg",
-          "Access-Control-Allow-Origin": "*"
+          Authorization:
+            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoidXNlciIsInBhc3MiOiJwYXNzd29yZCJ9.KrmQH1gT5pE-kd8wYhgXDkQMp1gah6sDu79ns9Ml9pg",
+          "Access-Control-Allow-Origin": "*",
         },
       })
       .then((res) => {
@@ -184,9 +202,8 @@ export default class App extends Component {
           icon: "success",
           dangerMode: false,
         });
-        this.closeModal()
-        this.setState({ loading: false })
-
+        this.closeModal();
+        this.setState({ loading: false });
       })
       .catch((err) => {
         console.log(err);
@@ -196,30 +213,28 @@ export default class App extends Component {
           icon: "error",
           dangerMode: true,
         });
-        this.setState({ loading: false })
-
+        this.setState({ loading: false });
       });
-
   }
 
   openModal = () => {
     this.setState({
-      modalIsOpen: true
-    })
-  }
+      modalIsOpen: true,
+    });
+  };
 
   afterOpenModal = () => {
     // references are now sync'd and can be accessed.
-    subtitle.style.color = '#000000a1';
-  }
+    subtitle.style.color = "#000000a1";
+  };
 
   closeModal = () => {
     this.setState({
       modalIsOpen: false,
       pictures: [],
       name: "",
-    })
-  }
+    });
+  };
 
   onDrop(picture) {
     this.setState({
@@ -228,9 +243,8 @@ export default class App extends Component {
   }
 
   nameChange(e) {
-    this.setState({ name: e.target.value })
+    this.setState({ name: e.target.value });
   }
-
 
   render() {
     return (
@@ -248,26 +262,43 @@ export default class App extends Component {
               style={customStyles}
               contentLabel="Example Modal"
             >
-
-              <h2 ref={_subtitle => (this.subtitle = _subtitle)}>Select an image to upload</h2>
+              <h2 ref={(_subtitle) => (this.subtitle = _subtitle)}>
+                Select an image to upload
+              </h2>
               <ImageUploader
                 withIcon={true}
-                buttonText={this.state.pictures[0] && this.state.pictures[0].name ? this.state.pictures[0].name : 'Choose an image'}
+                buttonText={
+                  this.state.pictures[0] && this.state.pictures[0].name
+                    ? this.state.pictures[0].name
+                    : "Choose an image"
+                }
                 onChange={this.onDrop}
-                imgExtension={['.jpg', '.png']}
+                imgExtension={[".jpg", ".png"]}
                 maxFileSize={5242880}
               />
-              <input type="text" placeholder="Enter name" onChange={this.nameChange} value={this.state.name} className="name-input" />
+              <input
+                type="text"
+                placeholder="Enter name"
+                onChange={this.nameChange}
+                value={this.state.name}
+                className="name-input"
+              />
               <button className="closeButton" onClick={this.closeModal}>
                 <img src={Close} alt="" />
               </button>
               <div className="upload-cont">
-
-                <button disabled={!this.state.name || !this.state.pictures.length || this.state.loading} className="uploadButton" onClick={this.upload}>
+                <button
+                  disabled={
+                    !this.state.name ||
+                    !this.state.pictures.length ||
+                    this.state.loading
+                  }
+                  className="uploadButton"
+                  onClick={this.upload}
+                >
                   Upload
-              </button>
+                </button>
               </div>
-
             </Modal>
           </div>
         </div>
