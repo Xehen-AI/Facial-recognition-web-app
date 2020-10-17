@@ -273,7 +273,7 @@ export default class App extends Component {
                     : "Choose an image"
                 }
                 onChange={this.onDrop}
-                imgExtension={[".jpg", ".png"]}
+                imgExtension={[".jpg", ".png", ".jpeg", ".gif"]}
                 maxFileSize={5242880}
               />
               <input
