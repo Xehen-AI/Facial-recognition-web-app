@@ -150,7 +150,7 @@ export default class App extends Component {
     data.append("predict_file", this.state.image);
 
     axios
-      .post(`http://0.0.0.0:5000/predict`, data, {
+      .post(`http://3.129.247.96:5000/predict`, data, {
         headers: {
           "content-type": "multipart/form-data",
           Authorization:
@@ -186,7 +186,7 @@ export default class App extends Component {
     this.setState({ loading: true });
     console.log(this.state.pictures[0], "Pictures [0]");
     axios
-      .post(`http://0.0.0.0:5000/upload_Image`, data, {
+      .post(`http://3.129.247.96:5000/upload_Image`, data, {
         headers: {
           "content-type": "multipart/form-data",
           Authorization:
